@@ -44,14 +44,14 @@ cars_schema = CarsSchema(many=True)
 
 
 @app.route("/cars", methods=["GET"])
-def get_devices():
+def get_cars():
     cars = Car.query.all()
     result = cars_schema.dump(cars)
     return jsonify(result)
 
 
 @app.route("/cars/<id>", methods=["GET"])
-def get_device(id):
+def get_car(id):
     car = Car.query.get(id)
     if car is None:
         abort(404)
@@ -60,27 +60,28 @@ def get_device(id):
 
 @app.route("/cars", methods=["POST"])
 def add_car():
-    new_car = Car(request.json['weight'], request.json['color'], request.json['volume'], 
-    request.json['standard_type'], request.json['engine_capacity'], request.json['price'], 
-    request.json['fuel'], request.json['number_of_wheels'])
+    data = CarsSchema().load(request.json)
+    new_car = Car(**data)
+
     db.session.add(new_car)
     db.session.commit()
+
     return car_schema.jsonify(new_car)
 
 
 @app.route("/cars/<id>", methods=["PUT"])
 def update_car(id):
     car = Car.query.get(id)
+
     if car is None:
         abort(404)
-    car.weight = request.json['weight']
-    car.color = request.json['color']
-    car.volume = request.json['volume']
-    car.standard_type = request.json['standard_type']
-    car.engine_capacity = request.json['engine_capacity']
-    car.price = request.json['price']
-    car.fuel =  request.json['fuel']
-    car.number_of_wheels = request.json['number_of_wheels']
+
+    data = CarsSchema().load(request.json)
+
+    for i in data:
+        setattr(car, i, request.json[i])
+
+
     db.session.commit()
     return car_schema.jsonify(car)
 
